@@ -14,14 +14,14 @@ class HTTPService {
     _baseUrl = _appConfig?.COIN_API_BASE_URL;
   }
 
-  Future<Response?> get(String _path) async {
+  Future<Response?> get(String path) async {
     try {
-      String _url = "$_baseUrl$_path";
-      Response _response = await dio.get(_url);
-      debugPrint(_response.toString());
-      return _response;
+      String url = "$_baseUrl$path";
+      Response response = await dio.get(url);
+      return response;
     } catch (error) {
-      print(error.toString());
+      debugPrint(error.toString());
+      return null;
     }
   }
 }
