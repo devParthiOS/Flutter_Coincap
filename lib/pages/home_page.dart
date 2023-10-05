@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:coincap/pages/detail_page.dart';
 import 'package:coincap/services/http_service.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
@@ -14,6 +15,9 @@ class _HomePageState extends State<HomePage> {
   late double deviceWidth;
   late double deviceHeight;
   late HTTPService http;
+  late String selectedOption;
+  bool isfirstCall = true;
+  late Map pricelist;
 
   @override
   void initState() {
@@ -42,7 +46,11 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _selectedCoinDropdown() {
-    List<String> coins = ["bitcoin"];
+    List<String> coins = ["bitcoin", "ethereum", "tether", "cardano", "ripple"];
+    if (isfirstCall) {
+      selectedOption = coins.first;
+      isfirstCall = false;
+    }
     List<DropdownMenuItem> items = coins.map(
       (e) {
         return DropdownMenuItem<String>(
@@ -56,9 +64,14 @@ class _HomePageState extends State<HomePage> {
       },
     ).toList();
     return DropdownButton(
-      value: coins.first,
+      key: UniqueKey(),
+      value: selectedOption,
       items: items,
-      onChanged: (value) {},
+      onChanged: (dynamic value) {
+        setState(() {
+          selectedOption = value;
+        });
+      },
       underline: Container(),
       dropdownColor: const Color.fromRGBO(83, 88, 206, 1.0),
       iconSize: 30,
@@ -71,7 +84,7 @@ class _HomePageState extends State<HomePage> {
 
   Widget _dataWidget() {
     return FutureBuilder(
-      future: http.get("coins/bitcoin"),
+      future: http.get("coins/$selectedOption"),
       builder: (BuildContext context, AsyncSnapshot snapshot) {
         if (snapshot.hasData) {
           Map data = jsonDecode(snapshot.data.toString());
@@ -80,6 +93,7 @@ class _HomePageState extends State<HomePage> {
               data["market_data"]["market_cap_change_percentage_24h"];
           String coinImage = data["image"]["large"];
           String description = data["description"]["en"];
+          pricelist = (data["market_data"]["current_price"]);
           return Column(
             children: [
               _coinImageWidget(coinImage),
@@ -122,12 +136,20 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _coinImageWidget(String imageUrl) {
-    return Container(
-      height: deviceHeight * 0.15,
-      width: deviceWidth * 0.15,
-      decoration: BoxDecoration(
-          image: DecorationImage(
-              fit: BoxFit.contain, image: NetworkImage(imageUrl))),
+    return GestureDetector(
+      onDoubleTap: () {
+        Navigator.push(context,
+            MaterialPageRoute(builder: (BuildContext context) {
+          return DetailPage(pricelist: pricelist);
+        }));
+      },
+      child: Container(
+        height: deviceHeight * 0.15,
+        width: deviceWidth * 0.15,
+        decoration: BoxDecoration(
+            image: DecorationImage(
+                fit: BoxFit.contain, image: NetworkImage(imageUrl))),
+      ),
     );
   }
 
